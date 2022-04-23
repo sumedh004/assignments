@@ -1,0 +1,72 @@
+- hosts: ubuntu
+  become: true
+
+
+  tasks:
+
+    - name: Install packages
+      apt: name=apache2,php,libapache2-mod-php,php-mysql,php-curl,php-gd,php-mbstring,php-xml,php-xmlrpc,unzip update_cache=yes state=latest
+
+
+    - name: Create document root
+      file:
+        path: "/var/www/cmcloudlab737.info"
+        state: directory
+        owner: "www-data"
+        group: "www-data"
+        mode: '0755'
+
+
+    - name: virtualhost
+      copy:
+        src: "vhost.conf"
+        dest: "/etc/apache2/sites-available/cmcloudlab737.info.conf"
+
+
+
+    - name: Enable new site
+      command: a2ensite cmcloudlab737.info.conf
+
+
+
+    - name: Disable default sitei
+      command: a2dissite 000-default.conf
+
+
+
+
+    - name: Download and unzip WordPress
+      unarchive:
+        src: https://wordpress.org/latest.tar.gz
+        dest: "/var/www/cmcloudlab737.info"
+        remote_src: yes
+        creates: "/var/www/cmcloudlab737.info/wordpress"
+
+
+    - name: Set ownership
+      file:
+        path: "/var/www/cmcloudlab737.info"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+
+
+    - name: Set permissions for directories
+      shell: find /var/www/cmcloudlab737.info/wordpress/ -type d -exec chmod 750 {} \;
+
+
+    - name: Set permissions for files
+      shell: find /var/www/cmcloudlab737.info/wordpress/ -type f -exec chmod 640 {} \;
+
+
+    - name: reload apache
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
+
